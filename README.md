@@ -27,9 +27,13 @@ npm run dev
 npm run build   # dist/ 생성
 ```
 
-Cloudflare Pages 연결 시:
-- 빌드 명령: `npm run build`
-- 출력 디렉토리: `dist`
+**현재 배포: GitHub Pages (공개)** → https://brbrlim.github.io/kaist/
+- `main` push 시 `.github/workflows/deploy.yml`가 자동 빌드·배포.
+- 서브경로(`/kaist/`)라서 `vite.config.js`에 `base: '/kaist/'` 설정됨.
+- ⚠️ 임시 공개. 추후 Tailscale로 비공개(나만 보기) 전환 예정.
+
+대안 — Cloudflare Pages:
+- 빌드 명령 `npm run build`, 출력 디렉토리 `dist` (단, `base`는 `/`로 되돌려야 함)
 
 ## 기술 메모
 
