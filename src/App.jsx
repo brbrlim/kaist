@@ -691,12 +691,149 @@ function PapersTab() {
 
 
 // ============================================================
+//  기본 학습 (면접 후기 · 기본기) — 실제 후기에서 추출
+// ============================================================
+
+// 후기들이 공통으로 말하는 '기본적으로 준비할 것'
+const BASIC_CHECK = [
+  {
+    t: "내 프로젝트·연구를 빠짐없이, 이해 가능하게",
+    d: "자기가 한 모든 프로젝트/연구를 빠짐없이 알고, 비전공자도 이해되게 설명할 수 있어야. 첫 질문이 '가장 자신 있는 연구·논문이 뭐냐'로 들어오는 경우가 많음.",
+    c: "#1a73e8",
+  },
+  {
+    t: "학부 수준 ML/DL 이론 (최소 SVD/PCA 이상)",
+    d: "카이스트는 전공 면접을 깊게 묻기로 유명. '가장 쉬운 난이도'가 SVD/PCA 정도라는 후기 — 그 위로는 다 나올 수 있다고 보고 기본기를 탄탄히. → 기출문제 탭 참고.",
+    c: "#ea4335",
+  },
+  {
+    t: "최신 연구·논문 1~2편 깊이 있게",
+    d: "연구 경험이 있으면 최신 논문에 대해 물어볼 가능성이 높음. 세세히 안 읽고 갔다가 후회했다는 후기. 컨택 교수님(오성준) 최신 논문은 필수. → 논문 리스트 탭 참고.",
+    c: "#9c27b0",
+  },
+  {
+    t: "지원 동기 · 석사 후 연구 방향",
+    d: "자소서/프로젝트 위주 + '석사 진학해 어떤 방향으로 연구할지'를 묻는다. '공부하고 싶은 마음'만으론 부족 — 프로젝트 경험으로 진정성을 증명해야.",
+    c: "#34a853",
+  },
+];
+
+// 면접 관련 정보 · 후기 원천 (CSV 정리)
+const BASIC_SRC = [
+  {
+    t: "KAIST AI대학원, 2배수 뽑아 면접으로 거른다",
+    url: "https://phdkim.net/board/free/17581", tag: "후기/제도",
+    take: "선발 정원의 2배수를 면접에 부르고 절반을 떨어뜨림 — 면접 비중이 결정적이라는 의미.",
+  },
+  {
+    t: "면접 본 사람의 댓글",
+    url: null, tag: "경험담",
+    take: "인공지능 관련 프로젝트 수행 경험 + 인공지능 기본 개념을 물어봄. 프로젝트 없이 '공부하고 싶은 마음'만으로는 확신을 못 줘서 떨어질 정도로 망쳤다는 증언.",
+    quote: "인공지능 관련된 프로젝트 수행 경험 혹은 인공지능에 관한 기본 개념도 물어봤습니다. … 프로젝트도 없는데 인공지능을 공부하고 싶은 마음만으로 어떻게 확신하냐고 하셨는데, 사람을 떨어뜨릴 정도로 정말 많이 망쳤습니다.",
+  },
+  {
+    t: "AI 대학원 예상 면접 문제 (자료 훌륭)",
+    url: "https://velog.io/@jhlim2993/Kaist-AI-%EB%8C%80%ED%95%99%EC%9B%90-%EC%98%88%EC%83%81-%EB%A9%B4%EC%A0%91-%EB%AC%B8%EC%A0%9C", tag: "예상문제",
+    take: "KAIST AI대학원 예상 면접 문제를 잘 정리해 둔 자료. 기출문제 탭과 함께 보기.",
+  },
+  {
+    t: "KAIST AI대학원 인터뷰 질문 모음",
+    url: "https://jrc-park.tistory.com/259", tag: "질문모음",
+    take: "실제 인터뷰에서 나온 질문들을 모아 둔 글.",
+  },
+  {
+    t: "2023 AI대학원 합격 후기",
+    url: "https://knowledgeforengineers.tistory.com/227", tag: "합격후기",
+    take: "면접에서 뭐가 나올지 예상 불가 — 다들 다른 질문을 받는다. 위 '기본기 체크리스트 1~4'가 바로 이 후기에서 나온 핵심. 면접 15분, 답변이 길어 3문항 정도 오감.",
+    quote: "면접 본 사람들 붙잡고 물어봐도 다들 다른 질문이라 '이것만 대비하면 된다'가 없습니다. ① 자기가 한 연구는 빠짐없이 다 알 것 ② 이해 가능하게 설명할 것 ③ 학부 수준 ML/DL 이론(SVD/PCA 정도가 제일 쉬운 수준)은 알 것 ④ 최근 연구를 아는 게 무조건 좋음. … 연구 경험이 꽤 되면 최신 논문을 물어볼 가능성이 높은데, 세세히 못 읽고 가서 후회했습니다.",
+  },
+  {
+    t: "카이스트 대학원 후기",
+    url: "https://bigdata-analyst.tistory.com/373", tag: "후기",
+    take: "카이스트는 전공 면접을 많이 묻기로 유명. 단, 본인은 전공 대신 연구 주제 질문을 받음. 첫 질문이 '가장 자신 있는 논문이 뭐냐' — 첫 질문 대비가 중요.",
+    quote: "카이스트 면접은 전공 면접을 많이 물어보는 곳으로 유명합니다. 그래서 전공 면접을 최대한 준비했는데, 정작 전공은 하나도 안 묻고 제 연구 주제를 많이 물으셨습니다. 첫 질문이 '가장 자신 있는 논문이 무엇이냐'였습니다.",
+  },
+  {
+    t: "면접 후기 — 자소서·프로젝트·연구 방향",
+    url: "https://jisuhan.tistory.com/210", tag: "후기",
+    take: "자기소개서 작성 프로젝트 위주로, 프로젝트 개념 설명을 시키고, 석사 진학해 어떤 방향으로 연구할지를 물음.",
+  },
+  {
+    t: "[2023년 전기] K대 인공지능 대학원 면접 기출 문제 파헤치기!",
+    url: "https://www.youtube.com/watch?v=2VhN5yl2OQw", tag: "영상",
+    take: "AI대학원 면접 기출 문제를 영상으로 짚어 주는 자료.",
+  },
+];
+
+function BasicsTab() {
+  const [open, setOpen] = useState({});
+  return (
+    <div style={{ fontFamily: "-apple-system, sans-serif", maxWidth: 680, margin: "0 auto", padding: "16px 14px 32px" }}>
+      <h1 style={{ margin: "0 0 4px", fontSize: 20, fontWeight: 700, color: "#202124" }}>📌 기본 학습 · 면접 후기에서 뽑은 기본기</h1>
+      <p style={{ margin: "0 0 16px", fontSize: 12, color: "#5f6368" }}>실제 KAIST AI대학원 면접 후기·경험담 정리 · 무엇을 '기본적으로' 준비해야 하나</p>
+
+      <div style={{ background: "#fff8e1", borderRadius: 10, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#7a5900", lineHeight: 1.6, borderLeft: "3px solid #fbbc04" }}>
+        💡 <b>한 줄 결론:</b> 면접은 사람마다 질문이 달라 '콕 집어 대비'가 안 됨. 그래서 ①내 연구 ②학부 ML/DL 기본기 ③최신 논문 ④지원 동기 — 이 네 축을 두루 준비하는 게 정답. 아래는 후기에서 추출한 체크리스트 + 원문 링크야.
+      </div>
+
+      <div style={{ fontSize: 13, fontWeight: 700, margin: "4px 0 8px", color: "#202124" }}>✅ 기본기 체크리스트 (후기 공통)</div>
+      {BASIC_CHECK.map((b, i) => (
+        <div key={i} style={{ background: "#fff", borderRadius: 12, marginBottom: 8, boxShadow: "0 1px 2px rgba(0,0,0,0.06)", borderLeft: "3px solid " + b.c, padding: "11px 14px" }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: b.c, flexShrink: 0 }}>{i + 1}</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#202124" }}>{b.t}</div>
+              <div style={{ fontSize: 12, color: "#5f6368", marginTop: 3, lineHeight: 1.5 }}>{b.d}</div>
+            </div>
+          </div>
+        </div>
+      ))}
+
+      <div style={{ fontSize: 13, fontWeight: 700, margin: "18px 0 8px", color: "#202124" }}>📂 후기·자료 원천 ({BASIC_SRC.length}개)</div>
+      {BASIC_SRC.map((s, i) => {
+        const isOpen = open[i];
+        return (
+          <div key={i} style={{ background: "#fff", borderRadius: 12, marginBottom: 8, boxShadow: "0 1px 2px rgba(0,0,0,0.06)", border: "1px solid #e8eaed", padding: "11px 14px" }}>
+            <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+              <span style={{ fontSize: 15, flexShrink: 0 }}>📝</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "#202124", lineHeight: 1.35 }}>
+                  {s.url ? <a href={s.url} target="_blank" rel="noopener noreferrer" style={{ color: "#1a73e8", textDecoration: "none" }}>{s.t} ↗</a> : s.t}
+                  <span style={{ display: "inline-block", padding: "1px 6px", borderRadius: 8, fontSize: 10, fontWeight: 600, background: "#00897b18", color: "#00897b", marginLeft: 5 }}>{s.tag}</span>
+                </div>
+                <div style={{ fontSize: 12, color: "#5f6368", marginTop: 4, lineHeight: 1.5 }}>{s.take}</div>
+                {s.quote && (
+                  <>
+                    <div onClick={() => setOpen(p => ({ ...p, [i]: !p[i] }))} style={{ display: "inline-block", marginTop: 7, fontSize: 11, color: "#00897b", border: "1px solid #00897b40", borderRadius: 6, padding: "1px 8px", cursor: "pointer", fontWeight: 600 }}>
+                      {isOpen ? "원문 숨기기" : "🗣️ 원문 발췌"}
+                    </div>
+                    {isOpen && (
+                      <div style={{ marginTop: 6, padding: "8px 12px", background: "#f0f7f5", borderRadius: 8, borderLeft: "3px solid #00897b", fontSize: 12, color: "#3c4043", lineHeight: 1.6, fontStyle: "italic" }}>"{s.quote}"</div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+
+      <div style={{ background: "#e8f0fe", borderRadius: 10, padding: "10px 14px", marginTop: 14, fontSize: 11, color: "#1a73e8", lineHeight: 1.5 }}>
+        🔗 체크리스트 ②는 <b>기출문제</b> 탭, ③은 <b>논문 리스트</b> 탭과 이어집니다. 여기서 '무엇을' 준비할지 잡고, 거기서 '어떻게' 채우세요.
+      </div>
+    </div>
+  );
+}
+
+
+// ============================================================
 //  최상위: 탭 네비게이션
 // ============================================================
 
 export default function App() {
   const [tab, setTab] = useState("cur");
   const TABS = [
+    { id: "basic", label: "📌 기본 학습", sub: "면접 후기·기본기" },
     { id: "cur", label: "🛠️ 커리큘럼", sub: "Learning by Doing" },
     { id: "exam", label: "📋 기출문제", sub: "면접 예상" },
     { id: "pap", label: "📄 논문 리스트", sub: "리딩" },
@@ -718,6 +855,7 @@ export default function App() {
         </div>
       </div>
       <div>
+        {tab === "basic" && <BasicsTab />}
         {tab === "cur" && <CurriculumTab />}
         {tab === "exam" && <ExamTab />}
         {tab === "pap" && <PapersTab />}
