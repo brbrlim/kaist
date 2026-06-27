@@ -830,6 +830,193 @@ function BasicsTab() {
 
 
 // ============================================================
+//  교수님 Q — 오성준 교수님이 직접 준 면접 질문 + 근원적 개념
+//  (출처: JOS vault 인박스 interview-concepts.md)
+// ============================================================
+
+// 교수님이 준 원본 질문 목록
+const PROF_ORIGIN = [
+  "Cross-entropy 식 설명",
+  "Gradient descent",
+  "Loss function",
+  "Diffusion 모델에 대한 관심",
+  "Diffusion model에서 score가 무엇을 의미하는지",
+  "Score-based learning / training",
+  "근원적인 질문들 (열린 사고력 질문)",
+];
+
+const CONCEPTS = [
+  {
+    n: 1, t: "Cross-Entropy (교차 엔트로피)", icon: "🎯", c: "#1a73e8",
+    def: "두 확률분포(정답 분포·모델 예측 분포)가 얼마나 다른지 재는 값. 분류의 표준 손실함수.",
+    formula: "H(p, q) = − Σ p(x)·log q(x)\n분류:  Loss = − Σ yᵢ·log(ŷᵢ)\n정답이 클래스 c면 → Loss = − log(ŷ_c)",
+    intuition: "정답 클래스에 높은 확률을 줄수록 −log(ŷ_c)↓(벌점↓). 정답인데 낮은 확률이면 큰 음수 → 큰 벌점. 즉 '자신 있게 맞히면 보상, 틀리게 확신하면 큰 벌'.",
+    points: [
+      "왜 MSE 안 쓰고 CE? → 분류는 확률을 다루고 CE가 MLE(최대우도)와 동치. MSE는 분류에서 gradient가 saturate되는데, CE는 틀릴수록 gradient가 커서 학습이 잘 됨.",
+      "KL과 관계? → CE = 엔트로피 H(p) + KL(p‖q). 정답분포 p가 고정이면 CE 최소화 = KL 최소화 = 두 분포 일치시키기.",
+      "내 프로젝트 연결: 국회 투표 분류 loss가 이것. 불균형 데이터는 class_weight로 보정.",
+    ],
+    ref: { name: "StatQuest: Cross Entropy", url: "https://www.youtube.com/watch?v=6ArSys5qHAU" },
+  },
+  {
+    n: 2, t: "Gradient Descent (경사하강법)", icon: "📉", c: "#ea4335",
+    def: "loss를 줄이는 방향(gradient의 반대)으로 파라미터를 조금씩 옮겨 최소값을 찾는 최적화 방법.",
+    formula: "θ ← θ − η·∇_θ L(θ)\nθ=파라미터, η=learning rate, ∇L=loss의 gradient",
+    intuition: "∇L은 'loss가 가장 빠르게 증가하는 방향'. 줄이려면 그 반대로 가야 해서 마이너스 부호. 안개 낀 산에서 가장 가파른 내리막으로 한 발씩 → 골짜기(최소)로.",
+    points: [
+      "learning rate η: 너무 크면 발산/진동, 너무 작으면 수렴 느림. → Adam 같은 적응적 방법이 파라미터마다 보폭 자동 조절.",
+      "SGD vs GD: 전체 데이터(GD) vs 미니배치(SGD). SGD가 빠르고 노이즈가 오히려 지역최소 탈출에 도움.",
+      "모멘텀/Adam: 과거 gradient를 누적(관성)해 진동↓·가속. Adam = 모멘텀 + 파라미터별 적응 보폭(2차 모멘트).",
+    ],
+    ref: { name: "3Blue1Brown: Gradient Descent", url: "https://www.youtube.com/watch?v=IHZwWFHWa-w" },
+  },
+  {
+    n: 3, t: "Loss Function (손실 함수)", icon: "🧮", c: "#fb8c00",
+    def: "모델의 예측이 정답에서 얼마나 벗어났는지를 하나의 숫자로 정량화한 함수. 학습은 이 값을 최소화하는 것.",
+    formula: "회귀(연속값)    → MSE, MAE\n이진 분류       → Binary cross-entropy\n다중 분류       → Categorical cross-entropy\n순위/검색       → Ranking / contrastive loss\n생성(분포 학습) → ELBO(VAE), score matching(diffusion)",
+    intuition: "좋은 loss의 조건: ①미분 가능(GD로 최소화하려면 필수) ②문제에 맞는 형태(틀림의 정의가 문제마다 다름) ③최소값이 '정답'과 일치.",
+    points: [
+      "'무엇을 최소화하는가'가 모델 설계의 출발점. loss를 잘못 고르면 엉뚱한 걸 학습.",
+      "내 연구 연결: 입장 측정에서 무엇을 loss로 둘지가 측정 대상을 정의 — 분류 확률이냐, 스케일링 점수냐에 따라 다름.",
+    ],
+    ref: { name: "ML Cheatsheet: Loss Functions", url: "https://ml-cheatsheet.readthedocs.io/en/latest/loss_functions.html" },
+  },
+  {
+    n: 4, t: "Diffusion Model (디퓨전 모델)", icon: "🌫️", c: "#8e24aa",
+    def: "데이터에 노이즈를 점진적으로 더했다가(forward), 그 역과정을 학습해 노이즈에서 데이터를 생성하는(reverse) 생성 모델.",
+    formula: "Forward (고정, 학습 X): x₀ → 노이즈 추가 → … → 순수 노이즈 x_T\nReverse (학습 O):     x_T → 노이즈 제거 → … → 데이터 x₀",
+    intuition: "모델은 '각 단계에서 어떤 노이즈가 더해졌는지' 예측하도록 학습(DDPM). 생성 시 랜덤 노이즈에서 시작해 학습된 역과정으로 한 단계씩 깨끗하게.",
+    points: [
+      "교수님이 '관심?'을 물음 → 왜 관심인지가 핵심: 생성과정이 명시적·단계적이라 해석/제어 가능성 + 본인 관심사(신뢰성)와 연결.",
+      "GAN과 비교: GAN=적대적(불안정), Diffusion=점진적 denoising(안정하나 느림). mode collapse 적음.",
+      "VAE와 비교: 둘 다 잠재변수 생성모델이나 diffusion은 다단계.",
+    ],
+    ref: { name: "Lilian Weng: Diffusion Models", url: "https://lilianweng.github.io/posts/2021-07-11-diffusion-models/" },
+  },
+  {
+    n: 5, t: "Score (스코어) — 교수님이 가장 근원적으로 물은 것", icon: "🧭", c: "#00897b",
+    def: "score = ∇_x log p(x). 로그 확률밀도의 gradient. '데이터 공간 각 점에서 확률밀도가 높아지는 방향'을 가리키는 벡터장.",
+    formula: "score(x) = ∇_x log p(x)\np(x)=데이터 확률밀도 / ∇log p = 밀도가 증가하는 방향",
+    intuition: "노이즈 낀 점 → 진짜 데이터 쪽으로 가는 방향을 알려주는 나침반. 노이즈 제거 = score 방향으로 이동. 생성 = score를 따라 데이터 밀도 높은 곳으로 점진 이동(Langevin).",
+    points: [
+      "칠판에 ∇_x log p(x) 쓰고 '확률 높은 쪽으로 가는 방향'이라고 직관 설명.",
+      "왜 log? → 계산 편의(곱→합) + 정규화상수 Z가 미분 시 사라짐. ∇_x log p(x)는 다루기 어려운 Z 없이 계산 가능 — score 기반의 핵심 이점.",
+    ],
+    ref: { name: "Yang Song: Score-Based Models (필독)", url: "https://yang-song.net/blog/2021/score/" },
+  },
+  {
+    n: 6, t: "Score-Based Learning / Training", icon: "🌀", c: "#3949ab",
+    def: "score(∇_x log p(x))를 신경망으로 추정(score matching)하고, 그 score를 따라 샘플을 생성(Langevin dynamics)하는 생성 프레임워크.",
+    formula: "학습:   score matching으로 s_θ(x) ≈ ∇_x log p(x) (여러 노이즈 레벨)\n샘플링: 랜덤 점 → score 방향 이동 + 약간의 노이즈 → 밀도 높은 곳 수렴",
+    intuition: "★핵심 통찰: DDPM(diffusion)은 '노이즈 예측'으로 학습되지만 수학적으로 score 추정과 동치. Song et al.(2021)이 둘을 SDE 하나로 통합 → 'diffusion과 score-based는 같은 것의 다른 관점'.",
+    points: [
+      "'DDPM과 score-based가 사실 같다'는 통합 관점이 핵심 한 방 — 이걸 말하면 깊이 입증.",
+      "score matching이 정규화상수 Z를 피하는 이유(#5 참조).",
+    ],
+    ref: { name: "Song et al. 2021: Score-Based SDE", url: "https://arxiv.org/abs/2011.13456" },
+  },
+  {
+    n: 7, t: "근원적 질문 (열린 사고력 테스트)", icon: "💭", c: "#5f6368",
+    def: "'왜 딥러닝이 작동하는가', '왜 깊은 망이 좋은가', '일반화는 왜 되는가', '더 많은 데이터 vs 더 좋은 모델' 같은 정답 없는 질문.",
+    intuition: "정답이 아니라 사고 과정을 봄. 모른다고 얼버무리지 말 것. 논리적 추론 + 한계 인식 + 자기 견해를 구조적으로.",
+    points: [
+      "예: '왜 깊으면 좋은가' → 계층적 특징 학습(저수준→고수준)·표현력 증가, 단 과파라미터화의 일반화 역설은 아직 미해결로 안다 — 식으로 아는 것/모르는 것을 구분.",
+      "핵심 태도: 침착하게, 구조적으로, 정직하게. 압박 면접일 수 있으니 당황 금지.",
+    ],
+  },
+];
+
+const CONCEPT_CHECK = [
+  "cross-entropy 식 칠판에 쓰고 '왜 MSE 아닌지'까지 설명",
+  "gradient descent: 왜 반대방향, learning rate 효과 설명",
+  "loss function 문제별 선택 근거",
+  "diffusion forward/reverse 그림으로 설명 + 왜 관심인지",
+  "score = ∇x log p(x), '데이터로 가는 방향' 직관",
+  "DDPM ↔ score-based 동치성 언급",
+  "열린 질문: 정직하게 추론 (아는 것/모르는 것 구분)",
+  "전부 '내 언어로' 재현 (암기 아닌 이해)",
+];
+
+function ConceptsTab() {
+  const [exp, setExp] = useState(1);
+  return (
+    <div style={{ fontFamily: "-apple-system, sans-serif", maxWidth: 680, margin: "0 auto", padding: "16px 14px 32px" }}>
+      <h1 style={{ margin: "0 0 4px", fontSize: 20, fontWeight: 700, color: "#202124" }}>🎯 교수님 Q · 근원적 개념</h1>
+      <p style={{ margin: "0 0 14px", fontSize: 12, color: "#5f6368" }}>오성준 교수님이 직접 준 면접 질문 + 핵심 개념 · 출처: 인박스 노트</p>
+
+      <div style={{ background: "#fce8e6", borderRadius: 10, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#a50e0e", lineHeight: 1.6, borderLeft: "3px solid #d93025" }}>
+        🔑 <b>패턴:</b> "암기 말고 수식의 의미를 네 언어로." 칠판에 식 쓰고 직관 설명 가능해야. <b>1~3</b>은 '기초의 왜', <b>4~6</b>은 교수님 현재 관심사(생성모델·score) 신호, <b>7</b>은 정답보다 사고 과정.
+      </div>
+
+      <div style={{ background: "#fff", borderRadius: 12, padding: "12px 14px", boxShadow: "0 1px 2px rgba(0,0,0,0.06)", marginBottom: 14 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6, color: "#202124" }}>📋 교수님이 준 원본 질문</div>
+        {PROF_ORIGIN.map((q, i) => (
+          <div key={i} style={{ fontSize: 12, color: "#5f6368", lineHeight: 1.7 }}>{i + 1}. {q}</div>
+        ))}
+      </div>
+
+      {CONCEPTS.map(m => {
+        const open = exp === m.n;
+        return (
+          <div key={m.n} style={{ background: "#fff", borderRadius: 12, marginBottom: 10, boxShadow: "0 1px 2px rgba(0,0,0,0.06)", border: open ? "1px solid " + m.c + "40" : "1px solid #e8eaed" }}>
+            <div onClick={() => setExp(open ? null : m.n)} style={{ padding: "12px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 8, background: m.c + "14", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>{m.icon}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: m.c }}>개념 {m.n}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "#202124" }}>{m.t}</div>
+              </div>
+              <span style={{ color: "#9aa0a6", transform: open ? "rotate(180deg)" : "", transition: "transform 0.2s" }}>▾</span>
+            </div>
+            {open && (
+              <div style={{ padding: "0 14px 14px", borderTop: "1px solid #f1f3f4" }}>
+                <div style={{ background: m.c + "0a", borderRadius: 8, padding: "10px 12px", margin: "10px 0", borderLeft: "3px solid " + m.c }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: m.c, marginBottom: 3 }}>📌 한 줄 정의</div>
+                  <div style={{ fontSize: 12, color: "#3c4043", lineHeight: 1.5 }}>{m.def}</div>
+                </div>
+
+                {m.formula && (
+                  <pre style={{ background: "#202124", color: "#e8eaed", borderRadius: 8, padding: "10px 12px", margin: "0 0 12px", fontSize: 11.5, lineHeight: 1.6, overflowX: "auto", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>{m.formula}</pre>
+                )}
+
+                <div style={{ background: "#fff8e1", borderRadius: 8, padding: "10px 12px", marginBottom: 12, borderLeft: "3px solid #fbbc04" }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: "#7a5900", marginBottom: 3 }}>💡 직관</div>
+                  <div style={{ fontSize: 12, color: "#3c4043", lineHeight: 1.6 }}>{m.intuition}</div>
+                </div>
+
+                <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6, color: "#202124" }}>🗣️ 면접 답변 포인트</div>
+                {m.points.map((p, i) => (
+                  <div key={i} style={{ display: "flex", gap: 7, padding: "7px 10px", marginBottom: 5, borderRadius: 8, background: "#f8f9fa" }}>
+                    <span style={{ color: m.c, flexShrink: 0, fontWeight: 700, fontSize: 12 }}>›</span>
+                    <div style={{ fontSize: 12, color: "#3c4043", lineHeight: 1.5 }}>{p}</div>
+                  </div>
+                ))}
+
+                {m.ref && (
+                  <div style={{ background: "#e8f0fe", borderRadius: 8, padding: "8px 12px", marginTop: 10, fontSize: 11, lineHeight: 1.4 }}>
+                    📖 <a href={m.ref.url} target="_blank" rel="noopener noreferrer" style={{ color: "#1a73e8", textDecoration: "none", fontWeight: 600 }}>{m.ref.name} ↗</a>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      <div style={{ background: "#fff", borderRadius: 12, padding: 14, marginTop: 16, boxShadow: "0 1px 2px rgba(0,0,0,0.06)" }}>
+        <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>✅ 면접 대비 체크리스트</div>
+        {CONCEPT_CHECK.map((c, i) => (
+          <div key={i} style={{ fontSize: 12, color: "#5f6368", lineHeight: 1.8 }}>☐ {c}</div>
+        ))}
+        <div style={{ background: "#e6f4ea", borderRadius: 8, padding: "8px 12px", marginTop: 10, fontSize: 11, color: "#137333", lineHeight: 1.5 }}>
+          🛠️ 이 개념들은 <b>커리큘럼</b> STEP 3(NumPy 직접 구현)에서 cross-entropy·gradient descent를, STEP 7에서 diffusion·score를 직접 만지면 체화됨. 읽기만 말고 손으로.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// ============================================================
 //  최상위: 탭 네비게이션
 // ============================================================
 
@@ -837,6 +1024,7 @@ export default function App() {
   const [tab, setTab] = useState("cur");
   const TABS = [
     { id: "basic", label: "📌 기본 학습", sub: "면접 후기·기본기" },
+    { id: "concept", label: "🎯 교수님 Q", sub: "근원적 개념" },
     { id: "cur", label: "🛠️ 커리큘럼", sub: "Learning by Doing" },
     { id: "exam", label: "📋 기출문제", sub: "면접 예상" },
     { id: "pap", label: "📄 논문 리스트", sub: "리딩" },
@@ -859,6 +1047,7 @@ export default function App() {
       </div>
       <div>
         {tab === "basic" && <BasicsTab />}
+        {tab === "concept" && <ConceptsTab />}
         {tab === "cur" && <CurriculumTab />}
         {tab === "exam" && <ExamTab />}
         {tab === "pap" && <PapersTab />}
